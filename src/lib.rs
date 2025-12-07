@@ -96,6 +96,14 @@ pub struct IpRangeTree {
     root: IpRangeTreeNode,
 }
 
+impl Default for IpRangeTree {
+    fn default() -> IpRangeTree {
+        IpRangeTree {
+            root: IpRangeTreeNode::new(),
+        }
+    }
+}
+
 impl IpRangeTree {
     pub fn new() -> Self {
         IpRangeTree {
