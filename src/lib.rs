@@ -111,7 +111,7 @@ impl IpRangeTree {
         }
     }
 
-    pub fn new_from_file(path: impl AsRef<str>) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new_from_file(path: impl AsRef<str>) -> std::io::Result<Self> {
         let mut new_self = Self::new();
 
         let file_content = std::fs::read_to_string(path.as_ref()).unwrap();
@@ -124,11 +124,13 @@ impl IpRangeTree {
                 let range_str = parts[1];
                 if let Ok(range) = range_str.parse::<u8>() {
                     if let Ok(ipv6_addr) = Ipv6Addr::from_str(ip_addr_str) {
-                        let v6_cidr = Ipv6Cidr::new(ipv6_addr, range)?;
+                        let v6_cidr = Ipv6Cidr::new(ipv6_addr, range)
+                            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
                         let ip_cidr = IpCidr::V6(v6_cidr);
                         new_self.insert_range(ip_cidr)
                     } else if let Ok(ipv4_addr) = Ipv4Addr::from_str(ip_addr_str) {
-                        let v4_cidr = Ipv4Cidr::new(ipv4_addr, range)?;
+                        let v4_cidr = Ipv4Cidr::new(ipv4_addr, range)
+                            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
                         let ip_cidr = IpCidr::V4(v4_cidr);
                         new_self.insert_range(ip_cidr)
                     } else {
