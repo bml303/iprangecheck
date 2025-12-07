@@ -23,20 +23,12 @@ impl IpRangeTreeNode {
         }
     }
 
-    pub fn get_zero(&self) -> Option<Box<IpRangeTreeNode>> {
-        self.zero.clone()
-    }
-
     pub fn get_zero_mut(&mut self) -> Option<&mut Box<IpRangeTreeNode>> {
         self.zero.as_mut()
     }
 
     pub fn set_zero(&mut self, zero: Box<IpRangeTreeNode>) {
         self.zero = Some(zero);
-    }
-
-    pub fn get_one(&self) -> Option<Box<IpRangeTreeNode>> {
-        self.one.clone()
     }
 
     pub fn get_one_mut(&mut self) -> Option<&mut Box<IpRangeTreeNode>> {
