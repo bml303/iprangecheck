@@ -283,8 +283,12 @@ impl IpRangeTree {
     }
 
     pub(crate) fn shl_u32(decimal: u32) -> (u8, u32) {
-        let highest_bit_set = (decimal & 0x80000000) > 0;
+        // let shifted_value = decimal.rotate_left(1);
+        // let overflow_bit = (shifted_value & 1) as u8;
+        // let shifted_value = shifted_value & 0xFFFFFFFE;
+        // (overflow_bit, shifted_value)
         let shifted_value = decimal << 1;
+        let highest_bit_set = (decimal & 0x80000000) > 0;
         if highest_bit_set {
             (1, shifted_value)
         } else {
@@ -293,8 +297,12 @@ impl IpRangeTree {
     }
 
     pub(crate) fn shl_u128(decimal: u128) -> (u8, u128) {
-        let highest_bit_set = (decimal & 0x80000000000000000000000000000000) > 0;
+        // let shifted_value = decimal.rotate_left(1);
+        // let overflow_bit = (shifted_value & 1) as u8;
+        // let shifted_value = shifted_value & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE;
+        // (overflow_bit, shifted_value)
         let shifted_value = decimal << 1;
+        let highest_bit_set = (decimal & 0x80000000000000000000000000000000) > 0;
         if highest_bit_set {
             (1, shifted_value)
         } else {
@@ -309,6 +317,11 @@ mod tests {
 
     #[test]
     fn check_if_in_range() {
+        println!("Starting test");
+
+        use std::time::Instant;
+        let start = Instant::now();
+
         // create range tree
         let mut ip_range_tree = IpRangeTree::new();
 
@@ -419,5 +432,8 @@ mod tests {
         let test_addr = IpAddr::V6(test_addr_v6);
         let result = ip_range_tree.is_in_range(test_addr);
         assert_eq!(result, false);
+
+        let duration = start.elapsed();
+        println!("Time elapsed: {:?}", duration);
     }
 }
