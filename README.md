@@ -1,6 +1,6 @@
 # iprangecheck
 
-## Generate file withip ranges
+## Generate file with ip ranges
 
 For the sake of this example we assume that all the AWS IP ranges are to be checked. First download the AWS IP ranges file from https://ip-ranges.amazonaws.com/ip-ranges.json and save it as `aws_ip_ranges.json`:
 
