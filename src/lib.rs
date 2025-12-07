@@ -151,62 +151,6 @@ impl IpRangeTree {
         Ok(new_self)
     }
 
-    pub fn insert_v4_range(&mut self, v4_cidr: Ipv4Cidr) {
-        let first_addr = v4_cidr.first_address();
-        let addr_value = first_addr.to_bits();
-        // -- get the binary representation of the address as a string with leading zeros
-        let addr_binstr = Self::u32_to_binary_with_zeros(addr_value);
-        debug!("Inserting v4 range {v4_cidr}, binary string is {addr_binstr}");
-        // -- get the characters
-        let mut bit_chars = addr_binstr.chars();
-        let mut current = &mut self.root;
-        for _ in 0..v4_cidr.network_length() {
-            if let Some(bit_char) = bit_chars.next() {
-                if bit_char == '0' {
-                    debug!("{bit_char}");
-                    current = if current.zero.is_some() {
-                        match current.get_zero_mut() {
-                            Some(zero) => zero,
-                            _ => unreachable!(),
-                        }
-                    } else {
-                        let zero = Box::new(IpRangeTreeNode::new());
-                        current.set_zero(zero);
-                        match current.get_zero_mut() {
-                            Some(zero) => zero,
-                            _ => unreachable!(),
-                        }
-                    };
-                } else {
-                    debug!("{bit_char}");
-                    current = if current.one.is_some() {
-                        match current.get_one_mut() {
-                            Some(one) => one,
-                            _ => unreachable!(),
-                        }
-                    } else {
-                        let one = Box::new(IpRangeTreeNode::new());
-                        current.set_one(one);
-                        match current.get_one_mut() {
-                            Some(one) => one,
-                            _ => unreachable!(),
-                        }
-                    };
-                }
-            }
-        }
-        let mut found = false;
-        for cidr in current.v4_ranges.iter_mut() {
-            if cidr.first_address() == first_addr && cidr.last_address() == v4_cidr.last_address() {
-                found = true;
-                break;
-            }
-        }
-        if !found {
-            current.v4_ranges.push(v4_cidr);
-        }
-    }
-
     pub fn is_in_range_v4(&self, v4_addr: Ipv4Addr) -> bool {
         let addr_value = v4_addr.to_bits();
         // -- get the binary representation of the address as a string with leading zeros
