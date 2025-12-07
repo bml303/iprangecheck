@@ -111,6 +111,10 @@ impl IpRangeTree {
         }
     }
 
+    pub fn has_ranges(&self) -> bool {
+        self.root.zero.is_some() || self.root.one.is_some()
+    }
+
     pub fn new_from_file(path: impl AsRef<str>) -> std::io::Result<Self> {
         let mut new_self = Self::new();
 
@@ -331,7 +335,10 @@ mod tests {
         // create range tree
         let mut ip_range_tree = IpRangeTree::new();
 
-        // dding v4 ranges
+        let result = ip_range_tree.has_ranges();
+        assert_eq!(result, false);
+
+        // adding v4 ranges
         ip_range_tree.insert_range(IpCidr::V4(
             Ipv4Cidr::new(Ipv4Addr::new(192, 168, 40, 0), 24).expect("Failed to insert IPv4 range"),
         ));
@@ -345,6 +352,9 @@ mod tests {
         ip_range_tree.insert_range(IpCidr::V4(
             Ipv4Cidr::new(Ipv4Addr::new(3, 24, 0, 0), 14).expect("Failed to insert IPv4 range"),
         ));
+
+        let result = ip_range_tree.has_ranges();
+        assert_eq!(result, true);
 
         // test v4 addresses
         let test_addr_v4 = Ipv4Addr::new(192, 168, 40, 55);
@@ -397,6 +407,9 @@ mod tests {
 
         // create tree from file
         let ip_range_tree = IpRangeTree::new_from_file("aws_ip_ranges.txt").unwrap();
+
+        let result = ip_range_tree.has_ranges();
+        assert_eq!(result, true);
 
         let test_addr_v4 = Ipv4Addr::new(3, 27, 203, 120);
         let result = ip_range_tree.is_in_range_v4(test_addr_v4);
