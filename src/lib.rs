@@ -1,11 +1,12 @@
 use cidr::{IpCidr, Ipv4Cidr, Ipv6Cidr};
 use log::*;
+use serde::{Deserialize, Serialize};
 use std::{
     net::{IpAddr, Ipv4Addr, Ipv6Addr},
     str::FromStr,
 };
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 pub struct IpRangeTreeNode {
     v4_ranges: Vec<Ipv4Cidr>,
     v6_ranges: Vec<Ipv6Cidr>,
@@ -90,6 +91,7 @@ impl IpRangeTreeNode {
     }
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 pub struct IpRangeTree {
     root: IpRangeTreeNode,
 }
