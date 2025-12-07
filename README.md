@@ -21,3 +21,10 @@ jq -r '.ipv6_prefixes[] | select(.ipv6_prefix) | .ipv6_prefix' aws_ip_ranges.jso
 ```
 
 ## Usage
+
+Add this to your `Cargo.toml`:
+
+```toml
+[dependencies]
+iprangecheck = { git = "https://github.com/bml303/iprangecheck.git" }
+```
