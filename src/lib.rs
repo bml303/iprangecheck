@@ -118,7 +118,7 @@ impl IpRangeTree {
     pub fn new_from_file(path: impl AsRef<str>) -> std::io::Result<Self> {
         let mut new_self = Self::new();
 
-        let file_content = std::fs::read_to_string(path.as_ref()).unwrap();
+        let file_content = std::fs::read_to_string(path.as_ref())?;
         let lines = file_content.lines();
 
         for line in lines {
@@ -145,9 +145,10 @@ impl IpRangeTree {
                 } else {
                     warn!("Failed to parse '{range_str}' of '{line}' into a u8")
                 }
+            } else {
+                warn!("Skipping invalid line '{line}'")
             }
         }
-
         Ok(new_self)
     }
 
@@ -168,6 +169,38 @@ impl IpRangeTree {
         }
     }
 
+    fn update_tree(current: &mut IpRangeTreeNode, highest_bit: u8) -> &mut IpRangeTreeNode {
+        if highest_bit == 0 {
+            if current.zero.is_some() {
+                match current.get_zero_mut() {
+                    Some(zero) => zero,
+                    _ => unreachable!(),
+                }
+            } else {
+                let zero = Box::new(IpRangeTreeNode::new());
+                current.set_zero(zero);
+                match current.get_zero_mut() {
+                    Some(zero) => zero,
+                    _ => unreachable!(),
+                }
+            }
+        } else {
+            if current.one.is_some() {
+                match current.get_one_mut() {
+                    Some(one) => one,
+                    _ => unreachable!(),
+                }
+            } else {
+                let one = Box::new(IpRangeTreeNode::new());
+                current.set_one(one);
+                match current.get_one_mut() {
+                    Some(one) => one,
+                    _ => unreachable!(),
+                }
+            }
+        }
+    }
+
     pub fn insert_range_v4(&mut self, v4_cidr: Ipv4Cidr) {
         let first_addr = v4_cidr.first_address();
         let mut addr_value = first_addr.to_bits();
@@ -177,48 +210,16 @@ impl IpRangeTree {
         for _ in 0..network_length {
             let (highest_bit, shifted_addr_value) = Self::shl_u32(addr_value);
             addr_value = shifted_addr_value;
-            if highest_bit == 0 {
-                current = if current.zero.is_some() {
-                    match current.get_zero_mut() {
-                        Some(zero) => zero,
-                        _ => unreachable!(),
-                    }
-                } else {
-                    let zero = Box::new(IpRangeTreeNode::new());
-                    current.set_zero(zero);
-                    match current.get_zero_mut() {
-                        Some(zero) => zero,
-                        _ => unreachable!(),
-                    }
-                };
-            } else {
-                current = if current.one.is_some() {
-                    match current.get_one_mut() {
-                        Some(one) => one,
-                        _ => unreachable!(),
-                    }
-                } else {
-                    let one = Box::new(IpRangeTreeNode::new());
-                    current.set_one(one);
-                    match current.get_one_mut() {
-                        Some(one) => one,
-                        _ => unreachable!(),
-                    }
-                };
-            }
+            current = Self::update_tree(current, highest_bit);
         }
-        let mut found = false;
         for cidr in current.v4_ranges.iter_mut() {
             if cidr.first_address() == v4_cidr.first_address()
                 && cidr.last_address() == v4_cidr.last_address()
             {
-                found = true;
-                break;
+                return;
             }
         }
-        if !found {
-            current.v4_ranges.push(v4_cidr);
-        }
+        current.v4_ranges.push(v4_cidr)
     }
 
     pub fn insert_range_v6(&mut self, v6_cidr: Ipv6Cidr) {
@@ -230,48 +231,16 @@ impl IpRangeTree {
         for _ in 0..network_length {
             let (highest_bit, shifted_addr_value) = Self::shl_u128(addr_value);
             addr_value = shifted_addr_value;
-            if highest_bit == 0 {
-                current = if current.zero.is_some() {
-                    match current.get_zero_mut() {
-                        Some(zero) => zero,
-                        _ => unreachable!(),
-                    }
-                } else {
-                    let zero = Box::new(IpRangeTreeNode::new());
-                    current.set_zero(zero);
-                    match current.get_zero_mut() {
-                        Some(zero) => zero,
-                        _ => unreachable!(),
-                    }
-                };
-            } else {
-                current = if current.one.is_some() {
-                    match current.get_one_mut() {
-                        Some(one) => one,
-                        _ => unreachable!(),
-                    }
-                } else {
-                    let one = Box::new(IpRangeTreeNode::new());
-                    current.set_one(one);
-                    match current.get_one_mut() {
-                        Some(one) => one,
-                        _ => unreachable!(),
-                    }
-                };
-            }
+            current = Self::update_tree(current, highest_bit);
         }
-        let mut found = false;
         for cidr in current.v6_ranges.iter_mut() {
             if cidr.first_address() == v6_cidr.first_address()
                 && cidr.last_address() == v6_cidr.last_address()
             {
-                found = true;
-                break;
+                return;
             }
         }
-        if !found {
-            current.v6_ranges.push(v6_cidr);
-        }
+        current.v6_ranges.push(v6_cidr)
     }
 
     pub fn insert_range(&mut self, ip_cidr: IpCidr) {
@@ -283,10 +252,6 @@ impl IpRangeTree {
     }
 
     pub(crate) fn shl_u32(decimal: u32) -> (u8, u32) {
-        // let shifted_value = decimal.rotate_left(1);
-        // let overflow_bit = (shifted_value & 1) as u8;
-        // let shifted_value = shifted_value & 0xFFFFFFFE;
-        // (overflow_bit, shifted_value)
         let shifted_value = decimal << 1;
         let highest_bit_set = (decimal & 0x80000000) > 0;
         if highest_bit_set {
@@ -297,10 +262,6 @@ impl IpRangeTree {
     }
 
     pub(crate) fn shl_u128(decimal: u128) -> (u8, u128) {
-        // let shifted_value = decimal.rotate_left(1);
-        // let overflow_bit = (shifted_value & 1) as u8;
-        // let shifted_value = shifted_value & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE;
-        // (overflow_bit, shifted_value)
         let shifted_value = decimal << 1;
         let highest_bit_set = (decimal & 0x80000000000000000000000000000000) > 0;
         if highest_bit_set {
