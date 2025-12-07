@@ -328,6 +328,34 @@ mod tests {
         let result = ip_range_tree.has_ranges();
         assert_eq!(result, false);
 
+        ip_range_tree.insert_range(IpCidr::V4(
+            Ipv4Cidr::new(Ipv4Addr::new(0, 0, 0, 0), 0).expect("Failed to insert IPv4 range"),
+        ));
+
+        let test_addr_v4 = Ipv4Addr::new(3, 27, 203, 120);
+        let result = ip_range_tree.is_in_range_v4(test_addr_v4);
+        assert_eq!(result, true);
+
+        let test_addr = IpAddr::V4(test_addr_v4);
+        let result = ip_range_tree.is_in_range(test_addr);
+        assert_eq!(result, true);
+
+        ip_range_tree.insert_range(IpCidr::V6(
+            Ipv6Cidr::new(Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 0), 0)
+                .expect("Failed to insert IPv6 range"),
+        ));
+
+        let test_addr_v6 = Ipv6Addr::new(0x2601, 0xf0f0, 0x5536, 1, 1, 1, 1, 1);
+        let result = ip_range_tree.is_in_range_v6(test_addr_v6);
+        assert_eq!(result, true);
+
+        let test_addr = IpAddr::V6(test_addr_v6);
+        let result = ip_range_tree.is_in_range(test_addr);
+        assert_eq!(result, true);
+
+        // create range tree
+        let mut ip_range_tree = IpRangeTree::new();
+
         // adding v4 ranges
         ip_range_tree.insert_range(IpCidr::V4(
             Ipv4Cidr::new(Ipv4Addr::new(192, 168, 40, 0), 24).expect("Failed to insert IPv4 range"),
