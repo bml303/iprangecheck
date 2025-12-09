@@ -20,6 +20,13 @@ Append the IPv6 ranges to the same file:
 jq -r '.ipv6_prefixes[] | select(.ipv6_prefix) | .ipv6_prefix' aws_ip_ranges.json >> aws_ip_ranges.txt
 ```
 
+There is also a more comprehensive source of IP ranges available from [public-cloud-provider-ip-ranges](https://github.com/tobilg/public-cloud-provider-ip-ranges). To generate a file with all the IP ranges, run:
+
+```shell
+curl -o all.json https://raw.githubusercontent.com/tobilg/public-cloud-provider-ip-ranges/main/data/providers/all.json
+jq -r '.[] | select(.cidr_block) | .cidr_block' all.json > all_ip_ranges.txt
+```
+
 ## Usage
 
 Add this to your `Cargo.toml`:
